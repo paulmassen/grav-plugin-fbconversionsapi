@@ -1,15 +1,18 @@
+<div align="center">
+    
 # Facebook Conversion API Plugin for Grav CMS
 
-This plugin integrates Facebook Conversion API with Grav CMS, allowing you to send server-side events to Facebook for improved conversion tracking and analytics.
-<div align="center">
-![Plugin Image](https://github.com/paulmassen/grav-plugin-fbconversionsapi/blob/main/plugin-image.png?raw=true)
 
+
+
+![](https://github.com/paulmassen/grav-plugin-fbconversionsapi/blob/main/plugin-image.png?raw=true)
 
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/paulmassendari)
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/paulmassendari)
 </div>
 
+This plugin integrates Facebook Conversion API with Grav CMS, allowing you to send server-side events to Facebook for improved conversion tracking and analytics.
 ## Features
 
 - Server-side event tracking
