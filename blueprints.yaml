@@ -3,7 +3,7 @@ slug: facebook-conversion-api
 type: plugin
 version: 0.1.0
 description: Facebook Conversion API integration
-icon: plug
+icon: facebook
 author:
   name: Paul Massendari
   email: paulmassendari@pm.me
@@ -42,7 +42,10 @@ form:
         type: bool
     test_event_code:
       type: text
-      label: Test Event Code
+      label: Test Event Code for debugging (you can find this in the event manager).
+      help: You can use this to verify that the plugin is working correctly.
+      placeholder: Example TEST123456
+
     credentials:
       type: section
       title: Credentials Facebook
@@ -50,27 +53,27 @@ form:
       fields:
         access_token:
           type: text
-          label: Access Token Facebook
-          help: Votre token d'accès Facebook Conversions API
+          label: Facebook Conversions API Access Token 
+          help: The Access Token for the Facebook Conversions API. You can find this in the Facebook Pixel settings in the event manager.
           validate:
             required: true
 
         pixel_id:
           type: text
-          label: ID du Pixel Facebook
-          help: L'identifiant de votre pixel Facebook
+          label: Facebook Pixel ID
+          help: The Pixel ID of the Facebook Pixel you want to send events to. You can find this in the Facebook Pixel settings in the event manager.
           validate:
             required: true
 
     tracking:
       type: section
-      title: Configuration du tracking
+      title: Tracking Configuration
       underline: true
       fields:
         track_pageviews:
           type: toggle
-          label: Suivi des pages vues
-          help: Activer le suivi automatique des pages vues
+          label: PageView Tracking
+          help: If enabled, the plugin will send a PageView event to Facebook on every page load.
           highlight: 1
           default: 1
           options:
