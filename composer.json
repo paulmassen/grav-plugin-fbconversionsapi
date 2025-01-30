@@ -1,0 +1,24 @@
+{
+  "name": "paulmassen/facebook-conversion-api",
+  "type": "grav-plugin",
+  "description": "Facebook Conversion API integration",
+  "keywords": ["plugin"],
+  "homepage": "https://github.com/paulmassen/grav-plugin-facebook-conversion-api",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Paul Massendari",
+      "email": "paulmassendari@pm.me",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": ">=7.1.3"
+  },
+  "autoload": {
+    "psr-4": {
+      "Grav\\Plugin\\FacebookConversionAPI\\": "classes/"
+    },
+    "classmap":  ["facebook-conversion-api.php"]
+  }
+}

@@ -1,0 +1,82 @@
+name: Facebook Conversion Api
+slug: facebook-conversion-api
+type: plugin
+version: 0.1.0
+description: Facebook Conversion API integration
+icon: plug
+author:
+  name: Paul Massendari
+  email: paulmassendari@pm.me
+homepage: https://github.com/paulmassen/grav-plugin-facebook-conversion-api
+demo: http://demo.yoursite.com
+keywords: grav, plugin, etc
+bugs: https://github.com/paulmassen/grav-plugin-facebook-conversion-api/issues
+docs: https://github.com/paulmassen/grav-plugin-facebook-conversion-api/blob/develop/README.md
+license: MIT
+
+dependencies:
+  - { name: grav, version: '>=1.6.0' }
+
+form:
+  validation: loose
+  fields:
+    enabled:
+      type: toggle
+      label: Debug 
+      highlight: 1
+      default: 0
+      options:
+        1: PLUGIN_ADMIN.ENABLED
+        0: PLUGIN_ADMIN.DISABLED
+      validate:
+        type: bool
+    debug:
+      type: toggle
+      label: PLUGIN_ADMIN.PLUGIN_STATUS
+      highlight: 1
+      default: 0
+      options:
+        1: PLUGIN_ADMIN.ENABLED
+        0: PLUGIN_ADMIN.DISABLED
+      validate:
+        type: bool
+    test_event_code:
+      type: text
+      label: Test Event Code
+    credentials:
+      type: section
+      title: Credentials Facebook
+      underline: true
+      fields:
+        access_token:
+          type: text
+          label: Access Token Facebook
+          help: Votre token d'accès Facebook Conversions API
+          validate:
+            required: true
+
+        pixel_id:
+          type: text
+          label: ID du Pixel Facebook
+          help: L'identifiant de votre pixel Facebook
+          validate:
+            required: true
+
+    tracking:
+      type: section
+      title: Configuration du tracking
+      underline: true
+      fields:
+        track_pageviews:
+          type: toggle
+          label: Suivi des pages vues
+          help: Activer le suivi automatique des pages vues
+          highlight: 1
+          default: 1
+          options:
+            1: PLUGIN_ADMIN.ENABLED
+            0: PLUGIN_ADMIN.DISABLED
+          validate:
+            type: bool
+
+    
