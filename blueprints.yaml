@@ -1,7 +1,7 @@
 name: Facebook Conversion Api
 slug: facebook-conversion-api
 type: plugin
-version: 0.1.0
+version: 1.0.0
 description: Facebook Conversion API integration
 icon: facebook
 author:
