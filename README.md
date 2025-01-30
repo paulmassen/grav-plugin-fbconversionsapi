@@ -2,7 +2,7 @@
 
 This plugin integrates Facebook Conversion API with Grav CMS, allowing you to send server-side events to Facebook for improved conversion tracking and analytics.
 <div align="center">
-![plugin-image.png?raw=true]()
+![Plugin Image](https://github.com/paulmassen/grav-plugin-fbconversionsapi/blob/main/plugin-image.png?raw=true)
 
 
 
