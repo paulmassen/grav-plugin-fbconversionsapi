@@ -10,6 +10,12 @@
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/paulmassendari)
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/paulmassendari)
+
+Support to the Grav CMS 👇
+<a href="https://opencollective.com/grav" target="_blank">
+
+  <img src="https://opencollective.com/webpack/donate/button@2x.png?color=blue" width=250 />
+</a>
 </div>
 
 This plugin integrates Facebook Conversion API with Grav CMS, allowing you to send server-side events to Facebook for improved conversion tracking and analytics.
