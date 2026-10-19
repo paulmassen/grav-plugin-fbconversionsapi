@@ -1,17 +1,16 @@
 name: Facebook Conversion Api
 slug: facebook-conversion-api
 type: plugin
-version: 1.0.0
+version: 1.1.0
 description: Facebook Conversion API integration
 icon: facebook
 author:
   name: Paul Massendari
   email: paulmassendari@pm.me
-homepage: https://github.com/paulmassen/grav-plugin-facebook-conversion-api
-demo: http://demo.yoursite.com
-keywords: grav, plugin, etc
-bugs: https://github.com/paulmassen/grav-plugin-facebook-conversion-api/issues
-docs: https://github.com/paulmassen/grav-plugin-facebook-conversion-api/blob/develop/README.md
+homepage: https://github.com/paulmassen/grav-plugin-fbconversionsapi
+keywords: grav, plugin, facebook, meta, conversions api, tracking
+bugs: https://github.com/paulmassen/grav-plugin-fbconversionsapi/issues
+docs: https://github.com/paulmassen/grav-plugin-fbconversionsapi/blob/main/README.md
 license: MIT
 
 dependencies:
@@ -22,7 +21,7 @@ form:
   fields:
     enabled:
       type: toggle
-      label: Debug 
+      label: PLUGIN_ADMIN.PLUGIN_STATUS
       highlight: 1
       default: 0
       options:
@@ -32,8 +31,9 @@ form:
         type: bool
     debug:
       type: toggle
-      label: PLUGIN_ADMIN.PLUGIN_STATUS
-      highlight: 1
+      label: Debug
+      help: Logs every event sent and every API response in logs/grav.log. Leave disabled in production.
+      highlight: 0
       default: 0
       options:
         1: PLUGIN_ADMIN.ENABLED
@@ -42,8 +42,8 @@ form:
         type: bool
     test_event_code:
       type: text
-      label: Test Event Code for debugging (you can find this in the event manager).
-      help: You can use this to verify that the plugin is working correctly.
+      label: Test Event Code
+      help: Only for testing (Events Manager > Test events). While set, events are NOT counted as real events. Leave empty in production.
       placeholder: Example TEST123456
 
     credentials:
@@ -51,19 +51,26 @@ form:
       title: Credentials Facebook
       underline: true
       fields:
-        access_token:
+        pixel_id:
           type: text
-          label: Facebook Conversions API Access Token 
-          help: The Access Token for the Facebook Conversions API. You can find this in the Facebook Pixel settings in the event manager.
+          label: Facebook Pixel (dataset) ID
+          help: Events Manager > your dataset > Settings > Dataset ID.
           validate:
             required: true
 
-        pixel_id:
+        access_token:
           type: text
-          label: Facebook Pixel ID
-          help: The Pixel ID of the Facebook Pixel you want to send events to. You can find this in the Facebook Pixel settings in the event manager.
+          label: Facebook Conversions API Access Token
+          help: Must be generated from the SAME dataset (Events Manager > dataset > Settings > Conversions API > Generate access token).
           validate:
             required: true
+
+        api_version:
+          type: text
+          label: Graph API version
+          help: Graph/Marketing API version used for the calls.
+          default: v25.0
+          placeholder: v25.0
 
     tracking:
       type: section
@@ -73,7 +80,7 @@ form:
         track_pageviews:
           type: toggle
           label: PageView Tracking
-          help: If enabled, the plugin will send a PageView event to Facebook on every page load.
+          help: If enabled, a PageView event is sent for each page view (after the page has been delivered to the visitor).
           highlight: 1
           default: 1
           options:
@@ -82,4 +89,30 @@ form:
           validate:
             type: bool
 
-    
+        exclude_bots:
+          type: toggle
+          label: Ignore bots
+          help: Do not send events for crawlers, scanners, monitoring tools and requests without user agent.
+          highlight: 1
+          default: 1
+          options:
+            1: PLUGIN_ADMIN.ENABLED
+            0: PLUGIN_ADMIN.DISABLED
+          validate:
+            type: bool
+
+        allowed_hosts:
+          type: array
+          label: Allowed hosts
+          help: Only send events for requests on these domains (e.g. www.example.com). Empty = all domains.
+          value_only: true
+          placeholder_value: www.example.com
+
+        pause_on_error:
+          type: number
+          label: Pause after configuration error (seconds)
+          help: When Facebook rejects the token or pixel ID, sending is paused for this duration. 0 = never pause.
+          default: 3600
+          validate:
+            type: int
+            min: 0

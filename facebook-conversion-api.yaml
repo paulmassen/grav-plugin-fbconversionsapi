@@ -1,1 +1,10 @@
 enabled: true
+debug: false
+test_event_code: ''
+pixel_id: ''
+access_token: ''
+api_version: v25.0
+track_pageviews: true
+exclude_bots: true
+allowed_hosts: []
+pause_on_error: 3600

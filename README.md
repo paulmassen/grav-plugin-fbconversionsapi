@@ -23,7 +23,12 @@ This plugin integrates Facebook Conversion API with Grav CMS, allowing you to se
 
 - Server-side event tracking
 - Automatic PageView events tracking
-- Support for custom events
+- Support for custom events (Twig, PHP and AJAX)
+- Events sent **after** the page has been delivered: no impact on page load time
+- Bots, unknown domains, AJAX/HEAD requests and error pages are ignored
+- Personal data (email, phone, name…) automatically normalized and SHA-256 hashed
+- `fbp` / `fbc` cookies and `fbclid` forwarded for a better event match quality
+- Errors logged once per hour (the access token is never logged) and sending paused after a configuration error
 - Test events mode support
 - Debug mode for troubleshooting
 - No Facebook Pixel required
@@ -31,12 +36,14 @@ This plugin integrates Facebook Conversion API with Grav CMS, allowing you to se
 ## Installation
 
 ### Manual Installation
-The plugin is available through the Grav Package Manager (GPM).
+The plugin is not (yet) listed in the Grav Package Manager (GPM). To install it:
 
-To install the plugin, you can:
-1. Browse the Plugin section from Admin
-2. Install it with the GPM with `bin/gpm install facebook-conversion-api`
-3. To install the plugin manually, download the zip version of this repository and unzip it under `/your/site/grav/user/plugins`. Then rename the folder to `facebook-conversion-api`.
+1. Download the zip of the [latest release](https://github.com/paulmassen/grav-plugin-fbconversionsapi/releases/latest) and unzip it under `/your/site/grav/user/plugins`. Then rename the folder to `facebook-conversion-api`.
+2. Or clone the repository:
+   ```bash
+   cd /your/site/grav/user/plugins
+   git clone https://github.com/paulmassen/grav-plugin-fbconversionsapi.git facebook-conversion-api
+   ```
 
 You should now have all the plugin files under:
 
@@ -49,21 +56,32 @@ You should now have all the plugin files under:
 Here is the default configuration and an explanation of available options:
 
 ```yaml
-enabled: true                   # Plugin status
-access_token: ''               # Your Facebook Conversion API access token
-pixel_id: ''                   # Your Facebook Pixel ID
-track_pageviews: true         # Enable automatic PageView event tracking
-test_event_code: ''           # Test Event Code (optional)
-debug: false                  # Enable debug logging
+enabled: true            # Plugin status
+debug: false             # Log every event sent and every API response
+test_event_code: ''      # Test Event Code (testing only, leave empty in production)
+pixel_id: ''             # Your Facebook Pixel (dataset) ID
+access_token: ''         # Conversions API access token (generated from the same dataset)
+api_version: v25.0       # Graph / Marketing API version
+track_pageviews: true    # Send a PageView event for each page view
+exclude_bots: true       # Ignore crawlers, scanners, monitoring tools…
+allowed_hosts: []        # Only track these domains, e.g. [www.example.com] (empty = all)
+pause_on_error: 3600     # Pause sending N seconds after a configuration error (0 = never)
 ```
+
+> **Tip:** if your site is the default virtual host of the server, any domain pointing to your IP
+> (and every scanner hitting the IP directly) will be served by Grav. Set `allowed_hosts` to your
+> real domain(s) so these requests are not sent to Facebook.
 
 ### Getting the Required Credentials
 
 1. Go to [Facebook Events Manager](https://business.facebook.com/events_manager)
-2. Select your Pixel
+2. Select your Pixel (dataset)
 3. Go to Settings
-4. Find your Pixel ID
-5. Go to "Access Token" section to generate your access token
+4. Copy the dataset / Pixel ID
+5. In the "Conversions API" section, click "Generate access token"
+
+The access token **must be generated from the same dataset** as the Pixel ID. Otherwise Facebook answers
+`Object with ID '…' does not exist, cannot be loaded due to missing permissions` (error 100, subcode 33).
 
 ## Usage
 
@@ -73,7 +91,25 @@ If `track_pageviews` is enabled, the plugin will automatically send PageView eve
 - Page URL
 - Page title
 - Content type (template)
-- Content ID (slug)
+- Content IDs (slug)
+
+PageView events are only sent for `GET` requests on HTML pages (not for `.json` AJAX calls, feeds, `HEAD` requests or error pages).
+
+### When are events sent?
+
+Events created during the page rendering (automatic PageView and `fb_conversion_event()` in Twig) are queued
+and sent in a single API call on Grav's `onShutdown` event, once the response has been delivered to the visitor.
+
+### User data and hashing
+
+Meta requires personal data to be normalized and **SHA-256** hashed. You can pass raw values: the fields
+`em`, `ph`, `fn`, `ln`, `db`, `ge`, `ct`, `st`, `zp`, `country` and `external_id` are trimmed, lowercased
+(phone: digits only) and hashed automatically. Values that are already SHA-256 hashes are left untouched.
+
+> Do **not** hash these fields with MD5: Meta would not be able to match them.
+
+`client_ip_address`, `client_user_agent`, `fbp` (`_fbp` cookie) and `fbc` (`_fbc` cookie or `fbclid` URL parameter)
+are added automatically.
 
 ### Sending Custom Events
 
@@ -83,10 +119,10 @@ You can send custom events in your Twig templates:
 {# Basic event #}
 {% do fb_conversion_event('Purchase', [], {'value': 123.45, 'currency': 'EUR'}) %}
 
-{# Event with user data #}
+{# Event with user data (raw values, hashed by the plugin) #}
 {% set user_data = {
-    'em': user.email|md5,
-    'ph': user.phone|md5
+    'em': user.email,
+    'ph': user.phone
 } %}
 
 {% set custom_data = {
@@ -106,8 +142,8 @@ You can also send events from your PHP code:
 $fbPlugin = $grav['plugins']['facebook-conversion-api'];
 
 $userData = [
-    'em' => hash('md5', $user->email),
-    'ph' => hash('md5', $user->phone)
+    'em' => $user->email,   // raw values, hashed by the plugin
+    'ph' => $user->phone
 ];
 
 $customData = [
@@ -116,8 +152,32 @@ $customData = [
     'content_name' => $product->getName()
 ];
 
+// Sent immediately
 $fbPlugin->sendEvent('Purchase', $userData, $customData);
+
+// Or queued and sent after the response has been delivered
+$fbPlugin->queueEvent('Purchase', $userData, $customData);
 ```
+
+### Sending Events from JavaScript (AJAX)
+
+The plugin exposes the `facebookConversion.sendEvent` page task, useful to track clicks
+(e.g. an "Add to calendar" button). POST to any page URL with the `.json` extension:
+
+```twig
+<script>
+fetch({{ (base_url_relative|rtrim('/') ~ page.url ~ '.json')|json_encode|raw }}, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
+    body: 'task=facebookConversion.sendEvent&event_name=AddToCalendar&custom_data='
+        + encodeURIComponent(JSON.stringify({ content_name: {{ page.title|json_encode|raw }} }))
+}).catch(function () {});
+</script>
+```
+
+- `event_name`: letters, digits and underscores only (default `AddToCalendar`)
+- `custom_data`: JSON object
+- Response: `{"success": true|false}`
 
 ### Standard Events
 
@@ -150,9 +210,9 @@ The ViewContent event is particularly useful for tracking when users view specif
 
 {# Advanced ViewContent with user data and additional parameters #}
 {% set user_data = {
-    'em': user.email|md5,
-    'ph': user.phone|md5,
-    'external_id': user.id|md5
+    'em': user.email,
+    'ph': user.phone,
+    'external_id': user.id
 } %}
 
 {% set custom_data = {
@@ -187,9 +247,9 @@ $fbPlugin->sendEvent('ViewContent', [], $customData);
 
 // Advanced ViewContent
 $userData = [
-    'em' => hash('md5', $user->email),
-    'ph' => hash('md5', $user->phone),
-    'external_id' => hash('md5', $user->id)
+    'em' => $user->email,
+    'ph' => $user->phone,
+    'external_id' => (string) $user->id
 ];
 
 $customData = [
@@ -227,16 +287,20 @@ test_event_code: 'TEST123'  # Replace with your test code
 ```yaml
 debug: true
 ```
+4. **Empty `test_event_code` once your tests are done**: while it is set, events only appear in the
+   "Test events" tab and are not used for measurement or optimization.
 
 ## Troubleshooting
 
 If you're having issues:
 
 1. Enable debug mode in the configuration
-2. Check the Grav logs for detailed error messages in the Clockwork Debugger
-3. Verify your access token and pixel ID
-4. Make sure your server can make outbound HTTPS requests
-5. Check the Events Manager Test Events tab to see if events are being received
+2. Check `logs/grav.log` (each distinct error is logged at most once per hour)
+3. Verify your access token and pixel ID — the token must be generated from the same dataset
+4. After a configuration error (invalid token, missing permission…) sending is paused for `pause_on_error`
+   seconds: clear the Grav cache (`bin/grav clearcache`) to retry immediately after fixing the configuration
+5. Make sure your server can make outbound HTTPS requests
+6. Check the Events Manager Test Events tab to see if events are being received
 
 ## Requirements
 
