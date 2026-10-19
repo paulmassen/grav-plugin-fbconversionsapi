@@ -184,7 +184,7 @@ The plugin exposes the `facebookConversion.sendEvent` page task, useful to track
 
 ```twig
 <script>
-fetch({{ (base_url_relative|rtrim('/') ~ page.url ~ '.json')|json_encode|raw }}, {
+fetch({{ (base_url_relative|rtrim('/') ~ page.rawRoute ~ '.json')|json_encode|raw }}, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-Requested-With': 'XMLHttpRequest' },
     body: 'task=facebookConversion.sendEvent&event_name=AddToCalendar&custom_data='
@@ -193,6 +193,8 @@ fetch({{ (base_url_relative|rtrim('/') ~ page.url ~ '.json')|json_encode|raw }},
 </script>
 ```
 
+- Use `page.rawRoute`, not `page.url`: on the home page `page.url` is `/`, which gives `/.json`,
+  a "hidden file" URL that most nginx configurations reject with a 403.
 - `event_name`: letters, digits and underscores only (default `AddToCalendar`)
 - `custom_data`: JSON object
 - Response: `{"success": true|false}`
