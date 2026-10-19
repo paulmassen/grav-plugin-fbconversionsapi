@@ -32,6 +32,7 @@ This plugin integrates Facebook Conversion API with Grav CMS, allowing you to se
 - Test events mode support
 - Debug mode for troubleshooting
 - No Facebook Pixel required
+- Compatible with **Grav 1.7** (classic Admin) and **Grav 2** (Admin2)
 
 ## Installation
 
@@ -133,6 +134,23 @@ You can send custom events in your Twig templates:
 
 {% do fb_conversion_event('Purchase', user_data, custom_data) %}
 ```
+
+`fb_conversion_event()` can also be used in page content (Markdown with Twig processing enabled),
+for example on a "thank you" page:
+
+```markdown
+---
+title: Thank you
+process:
+  twig: true
+---
+
+{% do fb_conversion_event('Lead', [], {'content_name': 'Newsletter'}) %}
+```
+
+On Grav 2, page content Twig runs in a security sandbox: the plugin allows `fb_conversion_event`
+in it automatically (`onBuildTwigSandboxPolicy`). Twig in page content must still be enabled under
+Configuration > Security > Twig in Content.
 
 ### PHP Usage
 
@@ -304,9 +322,19 @@ If you're having issues:
 
 ## Requirements
 
-- Grav CMS 1.7+
-- PHP 7.3+
+- Grav CMS 1.7 or Grav 2.x (`compatibility: grav: ['1.7', '2.0']`)
+- PHP 7.3+ (Grav 2 itself requires PHP 8.3+)
 - PHP cURL extension
+
+## Grav 2 / Admin2
+
+- The plugin settings are fully editable in **Admin2**. The access token is masked in the form
+  (`********`) and preserved when you save other settings; type a new value to replace it.
+- Admin2 talks to Grav through the API plugin, which does not run the page pipeline: browsing
+  the administration never sends events to Facebook.
+- The visitor IP is resolved with Grav's `Uri::ip()`. On Grav 2 forwarded headers are opt-in:
+  if your site is behind a reverse proxy or Cloudflare, enable the matching
+  `system.http_x_forwarded.*` setting so Facebook receives the real visitor IP.
 
 ## License
 

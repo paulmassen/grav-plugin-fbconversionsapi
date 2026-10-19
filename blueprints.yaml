@@ -1,7 +1,7 @@
 name: Facebook Conversion Api
 slug: facebook-conversion-api
 type: plugin
-version: 1.1.0
+version: 1.2.0
 description: Facebook Conversion API integration
 icon: facebook
 author:
@@ -13,8 +13,11 @@ bugs: https://github.com/paulmassen/grav-plugin-fbconversionsapi/issues
 docs: https://github.com/paulmassen/grav-plugin-fbconversionsapi/blob/main/README.md
 license: MIT
 
+compatibility:
+  grav: ['1.7', '2.0']
+
 dependencies:
-  - { name: grav, version: '>=1.6.0' }
+  - { name: grav, version: '>=1.7.0' }
 
 form:
   validation: loose
@@ -59,6 +62,9 @@ form:
             required: true
 
         access_token:
+          # Kept as "text": with "password" the classic Admin (Grav 1.7) renders the
+          # field empty and the required validation blocks every save. Admin2
+          # (Grav 2) masks it anyway ("access_token" matches its secret-name rule).
           type: text
           label: Facebook Conversions API Access Token
           help: Must be generated from the SAME dataset (Events Manager > dataset > Settings > Conversions API > Generate access token).

@@ -1,3 +1,15 @@
+# v1.2.0
+##  10/19/2026
+
+1. [](#new)
+    * Grav 2 and Admin2 compatibility (tested on Grav 2.2.10 + Admin2 2.1.35 / API 1.0.51 and Grav 1.7.53.5 + Admin 1.10.60)
+    * Declares `compatibility: grav: ['1.7', '2.0']` so the Grav 2 upgrade preflight and GPM no longer flag the plugin as Grav 1.7 only
+    * `fb_conversion_event()` allowed in sandboxed page content on Grav 2 (`onBuildTwigSandboxPolicy`)
+1. [](#improved)
+    * Visitor IP resolved with `Uri::ip()`, honouring the `system.http_x_forwarded.*` proxy settings
+    * Minimum Grav version raised to 1.7.0
+    * README: Grav 2 / Admin2 section, Twig in page content example
+
 # v1.1.0
 ##  10/19/2026
 

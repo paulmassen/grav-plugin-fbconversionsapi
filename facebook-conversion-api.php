@@ -2,11 +2,14 @@
 namespace Grav\Plugin;
 
 use Grav\Common\Plugin;
+use Grav\Common\Uri;
 use Grav\Framework\Psr7\Response;
 use RocketTheme\Toolbox\Event\Event;
 
 /**
  * Facebook (Meta) Conversions API – server-side events for Grav.
+ *
+ * Compatible with Grav 1.7 (classic Admin) and Grav 2 (Admin2 / API plugin).
  *
  * - PageView / Twig events are queued and sent in onShutdown, after the
  *   response has been flushed to the visitor (no impact on page load time).
@@ -20,6 +23,7 @@ class FacebookConversionAPIPlugin extends Plugin
     private const CONFIG = 'plugins.facebook-conversion-api.';
     private const PAUSE_CACHE_KEY = 'fbcapi-paused';
     private const DEFAULT_API_VERSION = 'v25.0';
+    private const TWIG_FUNCTION = 'fb_conversion_event';
 
     /** Fields of user_data that Meta expects SHA-256 hashed (normalized beforehand). */
     private const HASHED_FIELDS = ['em', 'ph', 'fn', 'ln', 'db', 'ge', 'ct', 'st', 'zp', 'country', 'external_id'];
@@ -44,12 +48,16 @@ class FacebookConversionAPIPlugin extends Plugin
 
     public function onPluginsInitialized()
     {
+        // Classic Admin (Grav 1.7). Admin2 (Grav 2) never runs the page
+        // pipeline: it talks to the API plugin, which fires none of the
+        // events below, so nothing is tracked from the administration.
         if ($this->isAdmin()) {
             return;
         }
 
         $this->enable([
             'onTwigInitialized' => ['onTwigInitialized', 0],
+            'onBuildTwigSandboxPolicy' => ['onBuildTwigSandboxPolicy', 0],
             'onPageInitialized' => ['onPageInitialized', 0],
             'onPageTask.facebookConversion.sendEvent' => ['onPageTaskSendEvent', 0],
             'onShutdown' => ['onShutdown', 0],
@@ -59,8 +67,22 @@ class FacebookConversionAPIPlugin extends Plugin
     public function onTwigInitialized()
     {
         $this->grav['twig']->twig->addFunction(
-            new \Twig\TwigFunction('fb_conversion_event', [$this, 'queueEvent'])
+            new \Twig\TwigFunction(self::TWIG_FUNCTION, [$this, 'queueEvent'])
         );
+    }
+
+    /**
+     * Grav 2: page content Twig runs in a sandbox. Allow fb_conversion_event()
+     * there, as on Grav 1.7 (it only queues an event and exposes no data).
+     * This event does not exist on Grav 1.7, where the handler is never called.
+     */
+    public function onBuildTwigSandboxPolicy(Event $event): void
+    {
+        $functions = (array) $event['functions'];
+        if (!in_array(self::TWIG_FUNCTION, $functions, true)) {
+            $functions[] = self::TWIG_FUNCTION;
+            $event['functions'] = $functions;
+        }
     }
 
     /**
@@ -234,7 +256,7 @@ class FacebookConversionAPIPlugin extends Plugin
             }
 
             $this->defaultUserData = [
-                'client_ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
+                'client_ip_address' => $this->clientIp(),
                 'client_user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? null,
                 'fbp' => $_COOKIE['_fbp'] ?? null,
                 'fbc' => $fbc,
@@ -242,6 +264,20 @@ class FacebookConversionAPIPlugin extends Plugin
         }
 
         return $this->defaultUserData;
+    }
+
+    /**
+     * Visitor IP resolved by Grav, which honours the system.http_x_forwarded.*
+     * settings (reverse proxy / Cloudflare), falling back to REMOTE_ADDR.
+     */
+    private function clientIp(): ?string
+    {
+        $ip = Uri::ip();
+        if (!is_string($ip) || filter_var($ip, FILTER_VALIDATE_IP) === false) {
+            $ip = $_SERVER['REMOTE_ADDR'] ?? null;
+        }
+
+        return is_string($ip) && $ip !== '' ? $ip : null;
     }
 
     /**
